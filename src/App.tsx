@@ -3,7 +3,18 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ManageItems from "./pages/admin/ManageItems";
+import BorrowHistory from "./pages/admin/BorrowHistory";
+import ScrapItems from "./pages/admin/ScrapItems";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import BrowseEquipment from "./pages/student/BrowseEquipment";
+import MyBorrows from "./pages/student/MyBorrows";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -14,11 +25,21 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/items" element={<ProtectedRoute requiredRole="admin"><ManageItems /></ProtectedRoute>} />
+            <Route path="/admin/borrows" element={<ProtectedRoute requiredRole="admin"><BorrowHistory /></ProtectedRoute>} />
+            <Route path="/admin/scrap" element={<ProtectedRoute requiredRole="admin"><ScrapItems /></ProtectedRoute>} />
+            <Route path="/student" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/student/browse" element={<ProtectedRoute requiredRole="student"><BrowseEquipment /></ProtectedRoute>} />
+            <Route path="/student/borrows" element={<ProtectedRoute requiredRole="student"><MyBorrows /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

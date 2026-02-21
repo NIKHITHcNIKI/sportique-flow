@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 const ScrapItems = () => {
   const { user } = useAuth();
@@ -57,6 +58,20 @@ const ScrapItems = () => {
     fetchItems();
   };
 
+  const downloadExcel = () => {
+    const data = scraps.map((s) => ({
+      Item: s.items?.name ?? "Unknown",
+      Quantity: s.quantity,
+      Reason: s.reason ?? "—",
+      Date: format(new Date(s.scrapped_at), "MMM d, yyyy"),
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Scrap Items");
+    XLSX.writeFile(wb, "scrap_items.xlsx");
+    toast.success("Downloaded scrap items!");
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -65,29 +80,34 @@ const ScrapItems = () => {
             <h1 className="text-5xl text-secondary">SCRAP ITEMS</h1>
             <p className="text-muted-foreground mt-1">Track scrapped and damaged equipment</p>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 font-semibold bg-destructive hover:bg-destructive/90">
-                <Plus className="h-4 w-4" /> Scrap Item
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="text-2xl" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>SCRAP AN ITEM</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 mt-2">
-                <Select value={form.item_id} onValueChange={(v) => setForm({ ...form, item_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select item..." /></SelectTrigger>
-                  <SelectContent>
-                    {items.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.available_quantity} avail)</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Input type="number" min={1} placeholder="Quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: +e.target.value })} />
-                <Input placeholder="Reason (optional)" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
-                <Button onClick={handleScrap} className="w-full bg-destructive hover:bg-destructive/90 font-semibold">Confirm Scrap</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button onClick={downloadExcel} variant="outline" className="gap-2 font-semibold">
+              <Download className="h-4 w-4" /> Download Excel
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 font-semibold bg-destructive hover:bg-destructive/90">
+                  <Plus className="h-4 w-4" /> Scrap Item
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="text-2xl" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>SCRAP AN ITEM</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 mt-2">
+                  <Select value={form.item_id} onValueChange={(v) => setForm({ ...form, item_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select item..." /></SelectTrigger>
+                    <SelectContent>
+                      {items.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.available_quantity} avail)</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Input type="number" min={1} placeholder="Quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: +e.target.value })} />
+                  <Input placeholder="Reason (optional)" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+                  <Button onClick={handleScrap} className="w-full bg-destructive hover:bg-destructive/90 font-semibold">Confirm Scrap</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card className="border-0 shadow-md">

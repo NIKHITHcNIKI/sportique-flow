@@ -8,8 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { Plus, Edit, Trash2, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import * as XLSX from "xlsx";
 
 type Item = {
   id: string;
@@ -70,6 +71,22 @@ const ManageItems = () => {
     setOpen(true);
   };
 
+  const downloadExcel = () => {
+    const data = items.map((item) => ({
+      Name: item.name,
+      Category: item.category,
+      "Total Quantity": item.total_quantity,
+      "Available Quantity": item.available_quantity,
+      Condition: item.condition,
+      Description: item.description ?? "—",
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Items");
+    XLSX.writeFile(wb, "equipment_items.xlsx");
+    toast.success("Downloaded items list!");
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -78,12 +95,16 @@ const ManageItems = () => {
             <h1 className="text-5xl text-secondary">MANAGE ITEMS</h1>
             <p className="text-muted-foreground mt-1">Add, edit and remove equipment</p>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openNew} className="gap-2 font-semibold">
-                <Plus className="h-4 w-4" /> Add Item
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button onClick={downloadExcel} variant="outline" className="gap-2 font-semibold">
+              <Download className="h-4 w-4" /> Download Excel
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openNew} className="gap-2 font-semibold">
+                  <Plus className="h-4 w-4" /> Add Item
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle className="text-2xl" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
@@ -117,6 +138,7 @@ const ManageItems = () => {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Card className="border-0 shadow-md">

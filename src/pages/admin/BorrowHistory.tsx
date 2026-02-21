@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 const BorrowHistory = () => {
   const [records, setRecords] = useState<any[]>([]);
@@ -48,12 +49,33 @@ const BorrowHistory = () => {
     }
   };
 
+  const downloadExcel = () => {
+    const data = records.map((r) => ({
+      Item: r.items?.name ?? "Unknown",
+      Quantity: r.quantity,
+      "Borrow Date": format(new Date(r.borrow_date), "MMM d, yyyy"),
+      "Return Date": r.actual_return_date ? format(new Date(r.actual_return_date), "MMM d, yyyy") : "—",
+      Status: r.status.replace("_", " "),
+      Purpose: r.purpose ?? "—",
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Borrow History");
+    XLSX.writeFile(wb, "borrow_history.xlsx");
+    toast.success("Downloaded borrow history!");
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-5xl text-secondary">BORROW HISTORY</h1>
-          <p className="text-muted-foreground mt-1">All borrowing records and return approvals</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-5xl text-secondary">BORROW HISTORY</h1>
+            <p className="text-muted-foreground mt-1">All borrowing records and return approvals</p>
+          </div>
+          <Button onClick={downloadExcel} variant="outline" className="gap-2 font-semibold">
+            <Download className="h-4 w-4" /> Download Excel
+          </Button>
         </div>
 
         <Card className="border-0 shadow-md">

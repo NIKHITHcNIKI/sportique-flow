@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const ADMIN_EMAIL = "scttmk@admin.sports";
 const ADMIN_PASSWORD = "scttmk1086sct";
+const ADMIN_NAME = "scttmk";
 
 type Tab = "student" | "admin";
 
@@ -17,18 +18,52 @@ const Login = () => {
   const [tab, setTab] = useState<Tab>("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [adminPass, setAdminPass] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const attemptAdminLogin = async () => {
+    if (adminName === ADMIN_NAME && adminPass === ADMIN_PASSWORD) {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+      });
+      setLoading(false);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        navigate("/admin");
+      }
+    }
+  };
+
+  const handleAdminNameChange = (val: string) => {
+    setAdminName(val);
+    // Check after state update via timeout
+    setTimeout(() => {
+      if (val === ADMIN_NAME && adminPass === ADMIN_PASSWORD) {
+        attemptAdminLogin();
+      }
+    }, 0);
+  };
+
+  const handleAdminPassChange = (val: string) => {
+    setAdminPass(val);
+    setTimeout(() => {
+      if (adminName === ADMIN_NAME && val === ADMIN_PASSWORD) {
+        attemptAdminLogin();
+      }
+    }, 0);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const loginEmail = tab === "admin" ? ADMIN_EMAIL : email;
-    const loginPassword = tab === "admin" ? ADMIN_PASSWORD : password;
-
     const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
+      email,
+      password,
     });
     setLoading(false);
 
@@ -105,17 +140,33 @@ const Login = () => {
                 <Shield className="h-8 w-8 text-primary mx-auto mb-2" />
                 <p className="font-bold text-foreground text-lg">Admin Access</p>
                 <p className="text-muted-foreground text-sm">
-                  Click the button below to sign in as administrator
+                  Enter admin credentials to sign in automatically
                 </p>
               </div>
-              <Button
-                onClick={handleLogin as any}
-                disabled={loading}
-                className="w-full h-12 text-lg font-semibold gap-2"
-              >
-                <LogIn className="h-5 w-5" />
-                {loading ? "Signing in..." : "Sign In as Admin"}
-              </Button>
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Admin Name"
+                  value={adminName}
+                  onChange={(e) => handleAdminNameChange(e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Admin Password"
+                  value={adminPass}
+                  onChange={(e) => handleAdminPassChange(e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+              {loading && (
+                <div className="flex items-center justify-center gap-2 text-primary">
+                  <LogIn className="h-5 w-5 animate-spin" />
+                  <span className="font-semibold">Signing in...</span>
+                </div>
+              )}
               <p className="text-center text-xs text-muted-foreground">
                 Admin access is restricted. Contact your system administrator for issues.
               </p>

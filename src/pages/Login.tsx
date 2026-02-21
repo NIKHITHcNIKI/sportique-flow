@@ -36,6 +36,8 @@ const Login = () => {
       } else {
         navigate("/admin");
       }
+    } else {
+      toast.error("Invalid admin credentials");
     }
   };
 
@@ -161,12 +163,14 @@ const Login = () => {
                   className="h-12 text-base"
                 />
               </div>
-              {loading && (
-                <div className="flex items-center justify-center gap-2 text-primary">
-                  <LogIn className="h-5 w-5 animate-spin" />
-                  <span className="font-semibold">Signing in...</span>
-                </div>
-              )}
+              <Button
+                onClick={attemptAdminLogin}
+                disabled={loading || !adminName || !adminPass}
+                className="w-full h-12 text-lg font-semibold gap-2"
+              >
+                <LogIn className="h-5 w-5" />
+                {loading ? "Signing in..." : "Sign In as Admin"}
+              </Button>
               <p className="text-center text-xs text-muted-foreground">
                 Admin access is restricted. Contact your system administrator for issues.
               </p>

@@ -42,14 +42,9 @@ const ScrapItems = () => {
     });
     if (error) { toast.error(error.message); return; }
 
-    // Reduce available & total quantity
-    const item = items.find(i => i.id === form.item_id);
-    if (item) {
-      await supabase.from("items").update({
-        available_quantity: Math.max(0, item.available_quantity - form.quantity),
-        total_quantity: Math.max(0, item.available_quantity - form.quantity), // simplified
-      }).eq("id", form.item_id);
-    }
+    // Atomically reduce available & total quantity
+    const { data: scrapped } = await supabase.rpc("scrap_item", { _item_id: form.item_id, _qty: form.quantity });
+    if (!scrapped) { toast.error("Not enough available quantity to scrap"); return; }
 
     toast.success("Item scrapped!");
     setOpen(false);

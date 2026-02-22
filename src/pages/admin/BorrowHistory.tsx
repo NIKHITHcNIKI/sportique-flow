@@ -30,12 +30,8 @@ const BorrowHistory = () => {
       .eq("id", record.id);
     if (error) { toast.error(error.message); return; }
 
-    // Restore available quantity
-    await supabase.rpc("has_role", { _user_id: record.user_id, _role: "student" }); // just to trigger auth
-    const { data: item } = await supabase.from("items").select("available_quantity").eq("id", record.item_id).single();
-    if (item) {
-      await supabase.from("items").update({ available_quantity: item.available_quantity + record.quantity }).eq("id", record.item_id);
-    }
+    // Atomically restore available quantity
+    await supabase.rpc("return_item", { _item_id: record.item_id, _qty: record.quantity });
     toast.success("Return approved!");
     fetchRecords();
   };

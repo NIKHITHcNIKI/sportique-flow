@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Package, History, Trash2, LogOut, User, ShoppingCart, RotateCcw, Dumbbell
+  LayoutDashboard, Package, History, Trash2, LogOut, User, ShoppingCart, RotateCcw, Dumbbell, QrCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +16,7 @@ const AppSidebar = () => {
     { label: "Manage Items", icon: Package, path: "/admin/items" },
     { label: "Borrow History", icon: History, path: "/admin/borrows" },
     { label: "Scrap Items", icon: Trash2, path: "/admin/scrap" },
+    { label: "QR Code", icon: QrCode, path: "/admin/qrcode" },
   ];
 
   const studentLinks = [

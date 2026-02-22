@@ -188,6 +188,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      borrow_item: {
+        Args: { _item_id: string; _qty: number }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -195,6 +199,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      return_item: {
+        Args: { _item_id: string; _qty: number }
+        Returns: boolean
+      }
+      scrap_item: { Args: { _item_id: string; _qty: number }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "student"

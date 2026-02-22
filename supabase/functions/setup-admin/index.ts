@@ -11,21 +11,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const { email, password } = await req.json();
+
+    if (!email || !password) {
+      return new Response(JSON.stringify({ error: "Email and password are required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const adminEmail = "scttmk@admin.sports";
-    const adminPassword = "scttmk1086sct";
-
     // Check if admin already exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const adminExists = existingUsers?.users?.find((u) => u.email === adminEmail);
+    const adminExists = existingUsers?.users?.find((u) => u.email === email);
 
     if (adminExists) {
-      // Make sure they have admin role
       const { data: roleData } = await supabaseAdmin
         .from("user_roles")
         .select("role")
@@ -44,18 +49,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create admin user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: adminEmail,
-      password: adminPassword,
+      email,
+      password,
       email_confirm: true,
-      user_metadata: { full_name: "SCTTMK Admin" },
+      user_metadata: { full_name: "Admin" },
     });
 
     if (createError) throw createError;
 
-    // Assign admin role (trigger creates 'student' role first, so update it)
-    await new Promise((r) => setTimeout(r, 500)); // wait for trigger
+    await new Promise((r) => setTimeout(r, 500));
     await supabaseAdmin
       .from("user_roles")
       .update({ role: "admin" })

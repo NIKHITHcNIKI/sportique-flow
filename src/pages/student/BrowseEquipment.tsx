@@ -34,6 +34,14 @@ const BrowseEquipment = () => {
     if (!user || !borrowDialog) return;
     if (quantity > borrowDialog.available_quantity) { toast.error("Not enough available"); return; }
 
+    // Atomically decrease available quantity first
+    const { data: success, error: rpcError } = await supabase.rpc("borrow_item", {
+      _item_id: borrowDialog.id,
+      _qty: quantity,
+    });
+    if (rpcError) { toast.error(rpcError.message); return; }
+    if (!success) { toast.error("Not enough available — someone may have borrowed it first."); return; }
+
     const { error } = await supabase.from("borrow_records").insert({
       item_id: borrowDialog.id,
       user_id: user.id,
@@ -41,11 +49,6 @@ const BrowseEquipment = () => {
       purpose: purpose || null,
     });
     if (error) { toast.error(error.message); return; }
-
-    // Decrease available quantity
-    await supabase.from("items").update({
-      available_quantity: borrowDialog.available_quantity - quantity,
-    }).eq("id", borrowDialog.id);
 
     toast.success("Equipment borrowed successfully!");
     setBorrowDialog(null);

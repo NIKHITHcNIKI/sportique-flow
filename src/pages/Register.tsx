@@ -23,7 +23,11 @@ const Register = () => {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: {
+          full_name: fullName,
+          phone: phone.trim() || null,
+          department: department.trim() || null,
+        },
         emailRedirectTo: window.location.origin,
       },
     });

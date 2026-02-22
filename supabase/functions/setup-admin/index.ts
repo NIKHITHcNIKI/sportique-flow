@@ -11,7 +11,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, password } = await req.json();
+    const { email, password, setupKey } = await req.json();
+
+    // Require setup secret to prevent unauthorized admin creation
+    const SETUP_SECRET = Deno.env.get("ADMIN_SETUP_SECRET");
+    if (!SETUP_SECRET || setupKey !== SETUP_SECRET) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!email || !password) {
       return new Response(JSON.stringify({ error: "Email and password are required" }), {

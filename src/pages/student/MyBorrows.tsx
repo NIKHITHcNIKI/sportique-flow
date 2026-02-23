@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
+import { mapDbError } from "@/lib/error-mapper";
 import { format } from "date-fns";
 import { RotateCcw } from "lucide-react";
 
@@ -31,7 +32,7 @@ const MyBorrows = () => {
       .from("borrow_records")
       .update({ status: "return_requested" })
       .eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(mapDbError(error));
     else { toast.success("Return requested! Waiting for admin approval."); fetchRecords(); }
   };
 

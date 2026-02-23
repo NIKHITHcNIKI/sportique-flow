@@ -188,6 +188,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      borrow_cart: {
+        Args: { _items: Json; _user_id: string }
+        Returns: boolean
+      }
       borrow_item: {
         Args: { _item_id: string; _qty: number }
         Returns: boolean

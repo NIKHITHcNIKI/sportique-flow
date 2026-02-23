@@ -6,9 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
+import { mapDbError } from "@/lib/error-mapper";
 import { format } from "date-fns";
 import { CheckCircle, Download } from "lucide-react";
-import * as XLSX from "xlsx";
+import { downloadCSV } from "@/lib/csv-export";
 
 const BorrowHistory = () => {
   const [records, setRecords] = useState<any[]>([]);
@@ -28,7 +29,7 @@ const BorrowHistory = () => {
       .from("borrow_records")
       .update({ status: "returned", actual_return_date: new Date().toISOString() })
       .eq("id", record.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(mapDbError(error)); return; }
 
     // Atomically restore available quantity
     await supabase.rpc("return_item", { _item_id: record.item_id, _qty: record.quantity });
@@ -45,19 +46,16 @@ const BorrowHistory = () => {
     }
   };
 
-  const downloadExcel = () => {
+  const downloadFile = () => {
     const data = records.map((r) => ({
       Item: r.items?.name ?? "Unknown",
       Quantity: r.quantity,
       "Borrow Date": format(new Date(r.borrow_date), "MMM d, yyyy"),
-      "Return Date": r.actual_return_date ? format(new Date(r.actual_return_date), "MMM d, yyyy") : "—",
+      "Return Date": r.actual_return_date ? format(new Date(r.actual_return_date), "MMM d, yyyy") : "",
       Status: r.status.replace("_", " "),
-      Purpose: r.purpose ?? "—",
+      Purpose: r.purpose ?? "",
     }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Borrow History");
-    XLSX.writeFile(wb, "borrow_history.xlsx");
+    downloadCSV(data, "borrow_history.csv");
     toast.success("Downloaded borrow history!");
   };
 
@@ -69,8 +67,8 @@ const BorrowHistory = () => {
             <h1 className="text-5xl text-secondary">BORROW HISTORY</h1>
             <p className="text-muted-foreground mt-1">All borrowing records and return approvals</p>
           </div>
-          <Button onClick={downloadExcel} variant="outline" className="gap-2 font-semibold">
-            <Download className="h-4 w-4" /> Download Excel
+          <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
+            <Download className="h-4 w-4" /> Download CSV
           </Button>
         </div>
 

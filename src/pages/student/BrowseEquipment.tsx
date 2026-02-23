@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
+import { mapDbError } from "@/lib/error-mapper";
 import { Search, ShoppingCart, Package, Plus, Minus, Trash2, X } from "lucide-react";
 
 interface CartItem {
@@ -83,30 +84,38 @@ const BrowseEquipment = () => {
     if (!user || cart.length === 0) return;
     setBorrowing(true);
 
+    // Validate cart items client-side
     for (const item of cart) {
-      const { data: success, error: rpcError } = await supabase.rpc("borrow_item", {
-        _item_id: item.id,
-        _qty: item.quantity,
-      });
-      if (rpcError || !success) {
-        toast.error(`Failed to borrow ${item.name}: ${rpcError?.message ?? "Not enough stock"}`);
+      if (item.quantity < 1 || item.quantity > 9999) {
+        toast.error(`Invalid quantity for ${item.name}`);
         setBorrowing(false);
-        fetchItems();
         return;
       }
+      if (item.purpose && item.purpose.length > 500) {
+        toast.error(`Purpose too long for ${item.name}`);
+        setBorrowing(false);
+        return;
+      }
+    }
 
-      const { error } = await supabase.from("borrow_records").insert({
-        item_id: item.id,
-        user_id: user.id,
-        quantity: item.quantity,
-        purpose: item.purpose || null,
-      });
-      if (error) {
-        toast.error(`Failed to record borrow for ${item.name}`);
-        setBorrowing(false);
-        fetchItems();
-        return;
-      }
+    // Use atomic borrow_cart function for transactional safety
+    const cartItems = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      purpose: item.purpose ? item.purpose.trim().slice(0, 500) : "",
+    }));
+
+    const { data: success, error: rpcError } = await supabase.rpc("borrow_cart", {
+      _user_id: user.id,
+      _items: cartItems,
+    });
+
+    if (rpcError || !success) {
+      toast.error(rpcError ? mapDbError(rpcError) : "Failed to borrow items. Please try again.");
+      setBorrowing(false);
+      fetchItems();
+      return;
     }
 
     toast.success(`Successfully borrowed ${cart.length} item(s)!`);
@@ -236,6 +245,7 @@ const BrowseEquipment = () => {
                       value={item.purpose}
                       onChange={(e) => updateCartPurpose(item.id, e.target.value)}
                       className="text-sm"
+                      maxLength={500}
                     />
                   </div>
                 ))}

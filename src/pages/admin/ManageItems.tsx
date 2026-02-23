@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
+import { mapDbError } from "@/lib/error-mapper";
 import { Plus, Edit, Trash2, Package, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import * as XLSX from "xlsx";
+import { downloadCSV } from "@/lib/csv-export";
 
 type Item = {
   id: string;
@@ -36,14 +37,25 @@ const ManageItems = () => {
   useEffect(() => { fetchItems(); }, []);
 
   const handleSave = async () => {
-    if (!form.name) { toast.error("Name is required"); return; }
+    if (!form.name || form.name.trim().length === 0) { toast.error("Name is required"); return; }
+    if (form.name.length > 100) { toast.error("Name must be under 100 characters"); return; }
+    if (form.description && form.description.length > 500) { toast.error("Description must be under 500 characters"); return; }
+    if (form.total_quantity < 0 || form.total_quantity > 99999) { toast.error("Total quantity must be between 0 and 99999"); return; }
+    if (form.available_quantity < 0 || form.available_quantity > form.total_quantity) { toast.error("Available quantity must be between 0 and total quantity"); return; }
+
+    const sanitizedForm = {
+      ...form,
+      name: form.name.trim().slice(0, 100),
+      description: form.description ? form.description.trim().slice(0, 500) : "",
+    };
+
     if (editingItem) {
-      const { error } = await supabase.from("items").update(form).eq("id", editingItem.id);
-      if (error) toast.error(error.message);
+      const { error } = await supabase.from("items").update(sanitizedForm).eq("id", editingItem.id);
+      if (error) toast.error(mapDbError(error));
       else toast.success("Item updated!");
     } else {
-      const { error } = await supabase.from("items").insert(form);
-      if (error) toast.error(error.message);
+      const { error } = await supabase.from("items").insert(sanitizedForm);
+      if (error) toast.error(mapDbError(error));
       else toast.success("Item added!");
     }
     setOpen(false);
@@ -55,7 +67,7 @@ const ManageItems = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this item?")) return;
     const { error } = await supabase.from("items").delete().eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(mapDbError(error));
     else { toast.success("Item deleted"); fetchItems(); }
   };
 
@@ -71,19 +83,16 @@ const ManageItems = () => {
     setOpen(true);
   };
 
-  const downloadExcel = () => {
+  const downloadFile = () => {
     const data = items.map((item) => ({
       Name: item.name,
       Category: item.category,
       "Total Quantity": item.total_quantity,
       "Available Quantity": item.available_quantity,
       Condition: item.condition,
-      Description: item.description ?? "—",
+      Description: item.description ?? "",
     }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Items");
-    XLSX.writeFile(wb, "equipment_items.xlsx");
+    downloadCSV(data, "equipment_items.csv");
     toast.success("Downloaded items list!");
   };
 
@@ -96,8 +105,8 @@ const ManageItems = () => {
             <p className="text-muted-foreground mt-1">Add, edit and remove equipment</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={downloadExcel} variant="outline" className="gap-2 font-semibold">
-              <Download className="h-4 w-4" /> Download Excel
+            <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
+              <Download className="h-4 w-4" /> Download CSV
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -112,7 +121,7 @@ const ManageItems = () => {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-3 mt-2">
-                <Input placeholder="Item Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <Input placeholder="Item Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={100} />
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -122,8 +131,8 @@ const ManageItems = () => {
                   </SelectContent>
                 </Select>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input type="number" placeholder="Total Qty" value={form.total_quantity} onChange={(e) => setForm({ ...form, total_quantity: +e.target.value })} />
-                  <Input type="number" placeholder="Available Qty" value={form.available_quantity} onChange={(e) => setForm({ ...form, available_quantity: +e.target.value })} />
+                  <Input type="number" placeholder="Total Qty" min={0} max={99999} value={form.total_quantity} onChange={(e) => setForm({ ...form, total_quantity: Math.max(0, Math.min(99999, +e.target.value)) })} />
+                  <Input type="number" placeholder="Available Qty" min={0} max={99999} value={form.available_quantity} onChange={(e) => setForm({ ...form, available_quantity: Math.max(0, Math.min(99999, +e.target.value)) })} />
                 </div>
                 <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -133,7 +142,7 @@ const ManageItems = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input placeholder="Description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <Input placeholder="Description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={500} />
                 <Button onClick={handleSave} className="w-full font-semibold">{editingItem ? "Update" : "Add"} Item</Button>
               </div>
             </DialogContent>

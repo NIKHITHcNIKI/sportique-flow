@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
+import { mapDbError } from "@/lib/error-mapper";
 import { format } from "date-fns";
 import { Trash2, Plus, Download } from "lucide-react";
-import * as XLSX from "xlsx";
+import { downloadCSV } from "@/lib/csv-export";
 
 const ScrapItems = () => {
   const { user } = useAuth();
@@ -34,13 +35,15 @@ const ScrapItems = () => {
 
   const handleScrap = async () => {
     if (!form.item_id) { toast.error("Select an item"); return; }
+    if (form.quantity < 1 || form.quantity > 9999) { toast.error("Quantity must be between 1 and 9999"); return; }
+    if (form.reason && form.reason.length > 500) { toast.error("Reason must be under 500 characters"); return; }
     const { error } = await supabase.from("scrap_items").insert({
       item_id: form.item_id,
       quantity: form.quantity,
-      reason: form.reason || null,
+      reason: form.reason ? form.reason.trim().slice(0, 500) : null,
       scrapped_by: user?.id,
     });
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(mapDbError(error)); return; }
 
     // Atomically reduce available & total quantity
     const { data: scrapped } = await supabase.rpc("scrap_item", { _item_id: form.item_id, _qty: form.quantity });
@@ -53,17 +56,14 @@ const ScrapItems = () => {
     fetchItems();
   };
 
-  const downloadExcel = () => {
+  const downloadFile = () => {
     const data = scraps.map((s) => ({
       Item: s.items?.name ?? "Unknown",
       Quantity: s.quantity,
-      Reason: s.reason ?? "—",
+      Reason: s.reason ?? "",
       Date: format(new Date(s.scrapped_at), "MMM d, yyyy"),
     }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Scrap Items");
-    XLSX.writeFile(wb, "scrap_items.xlsx");
+    downloadCSV(data, "scrap_items.csv");
     toast.success("Downloaded scrap items!");
   };
 
@@ -76,8 +76,8 @@ const ScrapItems = () => {
             <p className="text-muted-foreground mt-1">Track scrapped and damaged equipment</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={downloadExcel} variant="outline" className="gap-2 font-semibold">
-              <Download className="h-4 w-4" /> Download Excel
+            <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
+              <Download className="h-4 w-4" /> Download CSV
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -96,8 +96,8 @@ const ScrapItems = () => {
                       {items.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.available_quantity} avail)</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Input type="number" min={1} placeholder="Quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: +e.target.value })} />
-                  <Input placeholder="Reason (optional)" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+                  <Input type="number" min={1} max={9999} placeholder="Quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Math.max(1, Math.min(9999, +e.target.value)) })} />
+                  <Input placeholder="Reason (optional)" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} maxLength={500} />
                   <Button onClick={handleScrap} className="w-full bg-destructive hover:bg-destructive/90 font-semibold">Confirm Scrap</Button>
                 </div>
               </DialogContent>

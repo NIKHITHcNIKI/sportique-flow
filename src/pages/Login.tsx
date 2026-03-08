@@ -16,10 +16,9 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       toast.error(error.message);
       return;
     }
@@ -27,9 +26,10 @@ const Login = () => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
+      .eq("user_id", authData.user.id)
       .single();
 
+    setLoading(false);
     if (data?.role === "admin") navigate("/admin");
     else navigate("/student");
   };

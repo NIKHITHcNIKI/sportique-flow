@@ -2,9 +2,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Package, History, Trash2, LogOut, User, Users, ShoppingCart, RotateCcw, Dumbbell, QrCode
+  LayoutDashboard, Package, History, Trash2, LogOut, User, Users, ShoppingCart, RotateCcw, QrCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import collegeLogo from "@/assets/college-logo.png";
 
 const AppSidebar = () => {
   const { role, signOut, user } = useAuth();

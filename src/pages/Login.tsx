@@ -65,8 +65,8 @@ const Login = () => {
 
       <Card className="w-full max-w-md border-0 shadow-2xl bg-card relative z-10">
         <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-4 w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-            <Dumbbell className="h-8 w-8 text-primary-foreground" />
+          <div className="mx-auto mb-4 w-20 h-20 rounded-full overflow-hidden shadow-lg">
+            <img src={collegeLogo} alt="SET Institutions Logo" className="w-full h-full object-contain" />
           </div>
           <CardTitle className="text-4xl text-secondary tracking-widest" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
             SPORTS EQUIP

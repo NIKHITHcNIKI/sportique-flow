@@ -5,8 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Users, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Users, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "@/components/ui/sonner";
 
 interface StudentData {
   user_id: string;
@@ -24,58 +27,71 @@ const RegisteredStudents = () => {
   const [students, setStudents] = useState<StudentData[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      // Get all student profiles
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const fetchStudents = async () => {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      if (!profiles) { setLoading(false); return; }
+    if (!profiles) { setLoading(false); return; }
 
-      // Get student role user IDs
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "student");
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "student");
 
-      const studentUserIds = new Set(roles?.map(r => r.user_id) ?? []);
+    const studentUserIds = new Set(roles?.map(r => r.user_id) ?? []);
 
-      // Get borrow stats
-      const { data: borrows } = await supabase
-        .from("borrow_records")
-        .select("user_id, status");
+    const { data: borrows } = await supabase
+      .from("borrow_records")
+      .select("user_id, status");
 
-      const borrowStats = new Map<string, { active: number; total: number }>();
-      borrows?.forEach(b => {
-        const stat = borrowStats.get(b.user_id) ?? { active: 0, total: 0 };
-        stat.total++;
-        if (b.status === "borrowed" || b.status === "return_requested") stat.active++;
-        borrowStats.set(b.user_id, stat);
+    const borrowStats = new Map<string, { active: number; total: number }>();
+    borrows?.forEach(b => {
+      const stat = borrowStats.get(b.user_id) ?? { active: 0, total: 0 };
+      stat.total++;
+      if (b.status === "borrowed" || b.status === "return_requested") stat.active++;
+      borrowStats.set(b.user_id, stat);
+    });
+
+    const studentData: StudentData[] = profiles
+      .filter(p => studentUserIds.has(p.user_id))
+      .map(p => ({
+        user_id: p.user_id,
+        student_id: (p as any).student_id ?? null,
+        full_name: p.full_name,
+        email: p.email,
+        phone: p.phone,
+        department: p.department,
+        created_at: p.created_at,
+        active_borrows: borrowStats.get(p.user_id)?.active ?? 0,
+        total_borrows: borrowStats.get(p.user_id)?.total ?? 0,
+      }));
+
+    setStudents(studentData);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchStudents(); }, []);
+
+  const handleDelete = async (userId: string, name: string) => {
+    setDeleting(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke("delete-student", {
+        body: { user_id: userId },
       });
-
-      const studentData: StudentData[] = profiles
-        .filter(p => studentUserIds.has(p.user_id))
-        .map(p => ({
-          user_id: p.user_id,
-          student_id: (p as any).student_id ?? null,
-          full_name: p.full_name,
-          email: p.email,
-          phone: p.phone,
-          department: p.department,
-          created_at: p.created_at,
-          active_borrows: borrowStats.get(p.user_id)?.active ?? 0,
-          total_borrows: borrowStats.get(p.user_id)?.total ?? 0,
-        }));
-
-      setStudents(studentData);
-      setLoading(false);
-    };
-
-    fetchStudents();
-  }, []);
+      if (response.error) throw response.error;
+      toast.success(`${name} has been removed`);
+      setStudents(prev => prev.filter(s => s.user_id !== userId));
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete student");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   const filtered = students.filter(s =>
     s.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -130,6 +146,7 @@ const RegisteredStudents = () => {
                       <TableHead>Registered</TableHead>
                       <TableHead>Active Borrows</TableHead>
                       <TableHead>Total Borrows</TableHead>
+                      <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -147,11 +164,37 @@ const RegisteredStudents = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>{s.total_borrows}</TableCell>
+                        <TableCell>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" disabled={deleting === s.user_id}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Student</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete <strong>{s.full_name}</strong> ({s.student_id ?? s.email})? This action cannot be undone and will remove all their data.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(s.user_id, s.full_name)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                           {search ? "No students match your search" : "No students registered yet"}
                         </TableCell>
                       </TableRow>

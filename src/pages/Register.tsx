@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
-import { Dumbbell, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
+import collegeLogo from "@/assets/college-logo.png";
 
 const Register = () => {
   const [studentId, setStudentId] = useState("");

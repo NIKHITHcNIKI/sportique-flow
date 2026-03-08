@@ -17,6 +17,7 @@ const AppSidebar = () => {
     { label: "Borrow History", icon: History, path: "/admin/borrows" },
     { label: "Scrap Items", icon: Trash2, path: "/admin/scrap" },
     { label: "QR Code", icon: QrCode, path: "/admin/qrcode" },
+    { label: "Students", icon: Users, path: "/admin/students" },
   ];
 
   const studentLinks = [

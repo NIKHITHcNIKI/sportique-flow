@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Package, History, Trash2, LogOut, User, ShoppingCart, RotateCcw, Dumbbell, QrCode
+  LayoutDashboard, Package, History, Trash2, LogOut, User, Users, ShoppingCart, RotateCcw, Dumbbell, QrCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

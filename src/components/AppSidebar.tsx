@@ -2,9 +2,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Package, History, Trash2, LogOut, User, Users, ShoppingCart, RotateCcw, Dumbbell, QrCode
+  LayoutDashboard, Package, History, Trash2, LogOut, User, Users, ShoppingCart, RotateCcw, QrCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import collegeLogo from "@/assets/college-logo.png";
 
 const AppSidebar = () => {
   const { role, signOut, user } = useAuth();
@@ -38,8 +39,8 @@ const AppSidebar = () => {
       {/* Header */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-sidebar-primary rounded-xl flex items-center justify-center">
-            <Dumbbell className="h-5 w-5 text-sidebar-primary-foreground" />
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img src={collegeLogo} alt="SET Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-wider" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>

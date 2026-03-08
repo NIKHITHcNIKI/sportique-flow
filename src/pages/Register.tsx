@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/sonner";
 import { Dumbbell, UserPlus } from "lucide-react";
 
 const Register = () => {
+  const [studentId, setStudentId] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +19,8 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!studentId.trim()) { toast.error("Student ID is required"); return; }
+    if (studentId.length > 50) { toast.error("Student ID must be under 50 characters"); return; }
     if (fullName.trim().length === 0 || fullName.length > 100) { toast.error("Full name must be 1-100 characters"); return; }
     if (phone && (phone.length > 20 || !/^[0-9+\-() ]*$/.test(phone))) { toast.error("Invalid phone number format"); return; }
     if (department && department.length > 100) { toast.error("Department must be under 100 characters"); return; }
@@ -30,6 +33,7 @@ const Register = () => {
           full_name: fullName,
           phone: phone.trim() || null,
           department: department.trim() || null,
+          student_id: studentId.trim(),
         },
         emailRedirectTo: window.location.origin,
       },
@@ -60,11 +64,12 @@ const Register = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-3">
-            <Input placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" maxLength={100} />
-            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" maxLength={255} />
-            <Input type="password" placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="h-11" maxLength={128} />
-            <Input placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11" maxLength={20} />
-            <Input placeholder="Department (optional)" value={department} onChange={(e) => setDepartment(e.target.value)} className="h-11" maxLength={100} />
+            <Input placeholder="Student ID *" value={studentId} onChange={(e) => setStudentId(e.target.value)} required className="h-11" maxLength={50} />
+            <Input placeholder="Full Name *" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" maxLength={100} />
+            <Input type="email" placeholder="Email *" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" maxLength={255} />
+            <Input type="password" placeholder="Password (min 6 chars) *" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="h-11" maxLength={128} />
+            <Input placeholder="Phone *" value={phone} onChange={(e) => setPhone(e.target.value)} required className="h-11" maxLength={20} />
+            <Input placeholder="Department *" value={department} onChange={(e) => setDepartment(e.target.value)} required className="h-11" maxLength={100} />
             <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-semibold gap-2">
               <UserPlus className="h-5 w-5" />
               {loading ? "Creating account..." : "Register"}

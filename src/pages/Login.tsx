@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
-import { Dumbbell, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
+import collegeLogo from "@/assets/college-logo.png";
 
 const Login = () => {
   const [searchParams] = useSearchParams();

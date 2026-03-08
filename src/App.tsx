@@ -13,6 +13,7 @@ import ManageItems from "./pages/admin/ManageItems";
 import BorrowHistory from "./pages/admin/BorrowHistory";
 import ScrapItems from "./pages/admin/ScrapItems";
 import QRCodeGenerator from "./pages/admin/QRCodeGenerator";
+import RegisteredStudents from "./pages/admin/RegisteredStudents";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import BrowseEquipment from "./pages/student/BrowseEquipment";
 import MyBorrows from "./pages/student/MyBorrows";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/admin/borrows" element={<ProtectedRoute requiredRole="admin"><BorrowHistory /></ProtectedRoute>} />
             <Route path="/admin/scrap" element={<ProtectedRoute requiredRole="admin"><ScrapItems /></ProtectedRoute>} />
             <Route path="/admin/qrcode" element={<ProtectedRoute requiredRole="admin"><QRCodeGenerator /></ProtectedRoute>} />
+            <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><RegisteredStudents /></ProtectedRoute>} />
             <Route path="/student" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
             <Route path="/student/browse" element={<ProtectedRoute requiredRole="student"><BrowseEquipment /></ProtectedRoute>} />
             <Route path="/student/borrows" element={<ProtectedRoute requiredRole="student"><MyBorrows /></ProtectedRoute>} />

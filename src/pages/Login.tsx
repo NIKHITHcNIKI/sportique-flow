@@ -4,34 +4,54 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
 import { Dumbbell, LogIn } from "lucide-react";
 
 const Login = () => {
+  const [studentId, setStudentId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+  const loginWithEmail = async (loginEmail: string) => {
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
     if (error) {
       setLoading(false);
       toast.error(error.message);
       return;
     }
-
     const { data } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", authData.user.id)
       .single();
-
     setLoading(false);
     if (data?.role === "admin") navigate("/admin");
     else navigate("/student");
+  };
+
+  const handleStudentLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentId.trim()) { toast.error("Please enter your Student ID"); return; }
+    setLoading(true);
+    
+    // Look up email by student ID
+    const { data: emailData, error: lookupError } = await supabase.rpc("get_email_by_student_id", { _student_id: studentId.trim() });
+    if (lookupError || !emailData) {
+      setLoading(false);
+      toast.error("Student ID not found. Please check and try again.");
+      return;
+    }
+    await loginWithEmail(emailData as string);
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) { toast.error("Please enter your email"); return; }
+    setLoading(true);
+    await loginWithEmail(email);
   };
 
   return (
@@ -56,28 +76,63 @@ const Login = () => {
         </CardHeader>
 
         <CardContent className="pt-2">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-12 text-base"
-            />
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="h-12 text-base"
-            />
-            <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-semibold gap-2">
-              <LogIn className="h-5 w-5" />
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
+          <Tabs defaultValue="student" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="student">Student</TabsTrigger>
+              <TabsTrigger value="admin">Admin</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="student">
+              <form onSubmit={handleStudentLogin} className="space-y-4">
+                <Input
+                  placeholder="Student ID"
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                  required
+                  className="h-12 text-base"
+                  maxLength={50}
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-12 text-base"
+                />
+                <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-semibold gap-2">
+                  <LogIn className="h-5 w-5" />
+                  {loading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="admin">
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <Input
+                  type="email"
+                  placeholder="Admin Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-12 text-base"
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-12 text-base"
+                />
+                <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-semibold gap-2">
+                  <LogIn className="h-5 w-5" />
+                  {loading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+
           <p className="text-center mt-4 text-muted-foreground">
             Don't have an account?{" "}
             <button type="button" onClick={() => navigate("/register")} className="text-primary font-semibold hover:underline">

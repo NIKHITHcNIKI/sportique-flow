@@ -5,14 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
-import { Dumbbell, LogIn, Shield, GraduationCap } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dumbbell, LogIn } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("student");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -36,31 +34,6 @@ const Login = () => {
     else navigate("/student");
   };
 
-  const loginForm = (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <Input
-        type="email"
-        placeholder="Email address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="h-12 text-base"
-      />
-      <Input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        className="h-12 text-base"
-      />
-      <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-semibold gap-2">
-        <LogIn className="h-5 w-5" />
-        {loading ? "Signing in..." : "Sign In"}
-      </Button>
-    </form>
-  );
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary p-4 relative overflow-hidden">
       <div className="absolute inset-0 opacity-5 pointer-events-none">
@@ -83,33 +56,34 @@ const Login = () => {
         </CardHeader>
 
         <CardContent className="pt-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="student" className="gap-2">
-                <GraduationCap className="h-4 w-4" /> Student
-              </TabsTrigger>
-              <TabsTrigger value="admin" className="gap-2">
-                <Shield className="h-4 w-4" /> Admin
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="student">
-              {loginForm}
-              <p className="text-center mt-4 text-muted-foreground">
-                Don't have an account?{" "}
-                <button type="button" onClick={() => navigate("/register")} className="text-primary font-semibold hover:underline">
-                  Register here
-                </button>
-              </p>
-            </TabsContent>
-
-            <TabsContent value="admin">
-              {loginForm}
-              <p className="text-center mt-4 text-xs text-muted-foreground">
-                Admin accounts are pre-provisioned. Contact your administrator for access.
-              </p>
-            </TabsContent>
-          </Tabs>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-12 text-base"
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="h-12 text-base"
+            />
+            <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-semibold gap-2">
+              <LogIn className="h-5 w-5" />
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+          <p className="text-center mt-4 text-muted-foreground">
+            Don't have an account?{" "}
+            <button type="button" onClick={() => navigate("/register")} className="text-primary font-semibold hover:underline">
+              Register here
+            </button>
+          </p>
         </CardContent>
       </Card>
     </div>

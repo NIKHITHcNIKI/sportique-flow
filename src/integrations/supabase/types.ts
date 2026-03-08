@@ -108,6 +108,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          student_id: string | null
           user_id: string
         }
         Insert: {
@@ -117,6 +118,7 @@ export type Database = {
           full_name: string
           id?: string
           phone?: string | null
+          student_id?: string | null
           user_id: string
         }
         Update: {
@@ -126,6 +128,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          student_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -195,6 +198,10 @@ export type Database = {
       borrow_item: {
         Args: { _item_id: string; _qty: number }
         Returns: boolean
+      }
+      get_email_by_student_id: {
+        Args: { _student_id: string }
+        Returns: string
       }
       has_role: {
         Args: {

@@ -13,6 +13,7 @@ import ManageItems from "./pages/admin/ManageItems";
 import BorrowHistory from "./pages/admin/BorrowHistory";
 import ScrapItems from "./pages/admin/ScrapItems";
 import QRCodeGenerator from "./pages/admin/QRCodeGenerator";
+import RegisteredStudents from "./pages/admin/RegisteredStudents";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import BrowseEquipment from "./pages/student/BrowseEquipment";
 import MyBorrows from "./pages/student/MyBorrows";

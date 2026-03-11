@@ -55,6 +55,9 @@ const BorrowHistory = () => {
 
   const downloadFile = () => {
     const data = records.map((r) => ({
+      "Student Name": r.profile?.full_name ?? "Unknown",
+      "Student ID": r.profile?.student_id ?? "—",
+      Department: r.profile?.department ?? "—",
       Item: r.items?.name ?? "Unknown",
       Quantity: r.quantity,
       "Borrow Date": format(new Date(r.borrow_date), "MMM d, yyyy"),

@@ -87,6 +87,9 @@ const BorrowHistory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Student Name</TableHead>
+                  <TableHead>Student ID</TableHead>
+                  <TableHead>Department</TableHead>
                   <TableHead>Item</TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Borrow Date</TableHead>
@@ -98,7 +101,10 @@ const BorrowHistory = () => {
               <TableBody>
                 {records.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.items?.name ?? "Unknown"}</TableCell>
+                    <TableCell className="font-medium">{r.profile?.full_name ?? "Unknown"}</TableCell>
+                    <TableCell>{r.profile?.student_id ?? "—"}</TableCell>
+                    <TableCell>{r.profile?.department ?? "—"}</TableCell>
+                    <TableCell>{r.items?.name ?? "Unknown"}</TableCell>
                     <TableCell>{r.quantity}</TableCell>
                     <TableCell>{format(new Date(r.borrow_date), "MMM d, yyyy")}</TableCell>
                     <TableCell>{r.actual_return_date ? format(new Date(r.actual_return_date), "MMM d, yyyy") : "—"}</TableCell>
@@ -113,7 +119,7 @@ const BorrowHistory = () => {
                   </TableRow>
                 ))}
                 {records.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No records</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No records</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

@@ -19,7 +19,14 @@ const BorrowHistory = () => {
       .from("borrow_records")
       .select("*, items(name)")
       .order("created_at", { ascending: false });
-    setRecords(data ?? []);
+
+    // Fetch profiles for all unique user_ids
+    const userIds = [...new Set((data ?? []).map((r: any) => r.user_id))];
+    const { data: profiles } = userIds.length
+      ? await supabase.from("profiles").select("user_id, full_name, student_id, department").in("user_id", userIds)
+      : { data: [] };
+    const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.user_id, p]));
+    setRecords((data ?? []).map((r: any) => ({ ...r, profile: profileMap[r.user_id] ?? null })));
   };
 
   useEffect(() => { fetchRecords(); }, []);

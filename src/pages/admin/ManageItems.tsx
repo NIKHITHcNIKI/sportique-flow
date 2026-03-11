@@ -125,7 +125,7 @@ const ManageItems = () => {
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["General", "Ball Sports", "Racket Sports", "Athletics", "Fitness", "Water Sports", "Outdoor"].map(c => (
+                    {["Cricket Equipment", "Badminton / Shuttle Equipment", "Table Tennis Equipment", "Volleyball Equipment", "Basketball Equipment", "Football Equipment", "Handball Equipment", "Throw Ball Equipment", "Ball Badminton Equipment", "Athletics Equipment", "Fitness / Gym Equipment", "Indoor Games Equipment", "Other Sports Equipment", "Accessories / Utility Items"].map(c => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>

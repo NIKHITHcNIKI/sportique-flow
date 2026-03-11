@@ -19,7 +19,14 @@ const BorrowHistory = () => {
       .from("borrow_records")
       .select("*, items(name)")
       .order("created_at", { ascending: false });
-    setRecords(data ?? []);
+
+    // Fetch profiles for all unique user_ids
+    const userIds = [...new Set((data ?? []).map((r: any) => r.user_id))];
+    const { data: profiles } = userIds.length
+      ? await supabase.from("profiles").select("user_id, full_name, student_id, department").in("user_id", userIds)
+      : { data: [] };
+    const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.user_id, p]));
+    setRecords((data ?? []).map((r: any) => ({ ...r, profile: profileMap[r.user_id] ?? null })));
   };
 
   useEffect(() => { fetchRecords(); }, []);
@@ -48,6 +55,9 @@ const BorrowHistory = () => {
 
   const downloadFile = () => {
     const data = records.map((r) => ({
+      "Student Name": r.profile?.full_name ?? "Unknown",
+      "Student ID": r.profile?.student_id ?? "—",
+      Department: r.profile?.department ?? "—",
       Item: r.items?.name ?? "Unknown",
       Quantity: r.quantity,
       "Borrow Date": format(new Date(r.borrow_date), "MMM d, yyyy"),
@@ -77,6 +87,9 @@ const BorrowHistory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Student Name</TableHead>
+                  <TableHead>Student ID</TableHead>
+                  <TableHead>Department</TableHead>
                   <TableHead>Item</TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Borrow Date</TableHead>
@@ -88,7 +101,10 @@ const BorrowHistory = () => {
               <TableBody>
                 {records.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.items?.name ?? "Unknown"}</TableCell>
+                    <TableCell className="font-medium">{r.profile?.full_name ?? "Unknown"}</TableCell>
+                    <TableCell>{r.profile?.student_id ?? "—"}</TableCell>
+                    <TableCell>{r.profile?.department ?? "—"}</TableCell>
+                    <TableCell>{r.items?.name ?? "Unknown"}</TableCell>
                     <TableCell>{r.quantity}</TableCell>
                     <TableCell>{format(new Date(r.borrow_date), "MMM d, yyyy")}</TableCell>
                     <TableCell>{r.actual_return_date ? format(new Date(r.actual_return_date), "MMM d, yyyy") : "—"}</TableCell>
@@ -103,7 +119,7 @@ const BorrowHistory = () => {
                   </TableRow>
                 ))}
                 {records.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No records</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No records</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

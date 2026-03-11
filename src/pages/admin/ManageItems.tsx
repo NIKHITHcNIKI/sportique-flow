@@ -79,7 +79,7 @@ const ManageItems = () => {
 
   const openNew = () => {
     setEditingItem(null);
-    setForm({ name: "", category: "General", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
+    setForm({ name: "", category: "Cricket Equipment", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
     setOpen(true);
   };
 

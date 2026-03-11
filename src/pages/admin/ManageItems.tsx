@@ -27,7 +27,7 @@ const ManageItems = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [open, setOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [form, setForm] = useState({ name: "", category: "General", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
+  const [form, setForm] = useState({ name: "", category: "Cricket Equipment", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
 
   const fetchItems = async () => {
     const { data } = await supabase.from("items").select("*").order("name");

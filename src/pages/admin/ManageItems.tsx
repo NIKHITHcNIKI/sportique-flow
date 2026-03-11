@@ -27,7 +27,7 @@ const ManageItems = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [open, setOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [form, setForm] = useState({ name: "", category: "General", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
+  const [form, setForm] = useState({ name: "", category: "Cricket Equipment", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
 
   const fetchItems = async () => {
     const { data } = await supabase.from("items").select("*").order("name");
@@ -60,7 +60,7 @@ const ManageItems = () => {
     }
     setOpen(false);
     setEditingItem(null);
-    setForm({ name: "", category: "General", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
+    setForm({ name: "", category: "Cricket Equipment", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
     fetchItems();
   };
 
@@ -79,7 +79,7 @@ const ManageItems = () => {
 
   const openNew = () => {
     setEditingItem(null);
-    setForm({ name: "", category: "General", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
+    setForm({ name: "", category: "Cricket Equipment", total_quantity: 0, available_quantity: 0, condition: "Good", description: "" });
     setOpen(true);
   };
 
@@ -125,7 +125,7 @@ const ManageItems = () => {
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["General", "Ball Sports", "Racket Sports", "Athletics", "Fitness", "Water Sports", "Outdoor"].map(c => (
+                    {["Cricket Equipment", "Badminton / Shuttle Equipment", "Table Tennis Equipment", "Volleyball Equipment", "Basketball Equipment", "Football Equipment", "Handball Equipment", "Throw Ball Equipment", "Ball Badminton Equipment", "Athletics Equipment", "Fitness / Gym Equipment", "Indoor Games Equipment", "Other Sports Equipment", "Accessories / Utility Items"].map(c => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>

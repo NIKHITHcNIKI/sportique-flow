@@ -18,36 +18,42 @@ export type Database = {
         Row: {
           actual_return_date: string | null
           borrow_date: string
+          borrow_photo_url: string | null
           created_at: string
           expected_return_date: string | null
           id: string
           item_id: string
           purpose: string | null
           quantity: number
+          return_photo_url: string | null
           status: string
           user_id: string
         }
         Insert: {
           actual_return_date?: string | null
           borrow_date?: string
+          borrow_photo_url?: string | null
           created_at?: string
           expected_return_date?: string | null
           id?: string
           item_id: string
           purpose?: string | null
           quantity?: number
+          return_photo_url?: string | null
           status?: string
           user_id: string
         }
         Update: {
           actual_return_date?: string | null
           borrow_date?: string
+          borrow_photo_url?: string | null
           created_at?: string
           expected_return_date?: string | null
           id?: string
           item_id?: string
           purpose?: string | null
           quantity?: number
+          return_photo_url?: string | null
           status?: string
           user_id?: string
         }

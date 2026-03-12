@@ -12,8 +12,16 @@ interface CameraCaptureProps {
 const CameraCapture = ({ onCapture, capturedPreview, onClear, label = "Take Photo" }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [streaming, setStreaming] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [videoReady, setVideoReady] = useState(false);
+
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setStreaming(false);
+    setVideoReady(false);
+  }, []);
 
   const startCamera = useCallback(async () => {
     try {
@@ -21,37 +29,40 @@ const CameraCapture = ({ onCapture, capturedPreview, onClear, label = "Take Phot
         video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
+      streamRef.current = mediaStream;
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+          setVideoReady(true);
+        };
       }
-      setStream(mediaStream);
       setStreaming(true);
     } catch {
       alert("Camera access denied. Please allow camera access to take photos.");
     }
   }, []);
 
-  const stopCamera = useCallback(() => {
-    stream?.getTracks().forEach((t) => t.stop());
-    setStream(null);
-    setStreaming(false);
-  }, [stream]);
-
   const capture = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || !videoReady) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-    canvas.toBlob((blob) => {
-      if (blob) onCapture(blob);
-      stopCamera();
-    }, "image/jpeg", 0.8);
-  }, [onCapture, stopCamera]);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          onCapture(blob);
+        }
+        stopCamera();
+      },
+      "image/jpeg",
+      0.8
+    );
+  }, [onCapture, stopCamera, videoReady]);
 
   if (capturedPreview) {
     return (
@@ -80,9 +91,14 @@ const CameraCapture = ({ onCapture, capturedPreview, onClear, label = "Take Phot
         <div className="space-y-2">
           <div className="relative rounded-lg overflow-hidden border bg-black">
             <video ref={videoRef} autoPlay playsInline muted className="w-full h-40 object-cover" />
+            {!videoReady && (
+              <div className="absolute inset-0 flex items-center justify-center text-white text-sm">
+                Loading camera...
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
-            <Button type="button" onClick={capture} size="sm" className="flex-1 gap-1">
+            <Button type="button" onClick={capture} size="sm" className="flex-1 gap-1" disabled={!videoReady}>
               <Check className="h-3.5 w-3.5" /> Capture
             </Button>
             <Button type="button" onClick={stopCamera} size="sm" variant="outline">

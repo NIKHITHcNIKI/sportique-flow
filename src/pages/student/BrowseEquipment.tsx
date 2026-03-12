@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import CameraCapture from "@/components/CameraCapture";
 import {
   Search, ShoppingCart, Plus, Minus, Trash2,
   CircleDot, Target, Disc, Dumbbell, Trophy,
@@ -53,6 +54,8 @@ const BrowseEquipment = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [borrowing, setBorrowing] = useState(false);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const fetchItems = async () => {
     const { data } = await supabase.from("items").select("*").order("name");
@@ -110,8 +113,23 @@ const BrowseEquipment = () => {
 
   const getCartQty = (itemId: string) => cart.find(c => c.id === itemId)?.quantity ?? 0;
 
+  const handlePhotoCapture = (blob: Blob) => {
+    setPhotoBlob(blob);
+    setPhotoPreview(URL.createObjectURL(blob));
+  };
+
+  const clearPhoto = () => {
+    setPhotoBlob(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+  };
+
   const handleBorrowAll = async () => {
     if (!user || cart.length === 0) return;
+    if (!photoBlob) {
+      toast.error("Please take a photo of the items before borrowing");
+      return;
+    }
     setBorrowing(true);
     for (const item of cart) {
       if (item.quantity < 1 || item.quantity > 9999) {
@@ -125,6 +143,20 @@ const BrowseEquipment = () => {
         return;
       }
     }
+
+    // Upload photo
+    const fileName = `borrow_${user.id}_${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from("borrow-photos")
+      .upload(fileName, photoBlob, { contentType: "image/jpeg" });
+    if (uploadError) {
+      toast.error("Failed to upload photo. Please try again.");
+      setBorrowing(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("borrow-photos").getPublicUrl(fileName);
+    const photoUrl = urlData.publicUrl;
+
     const cartItems = cart.map(item => ({
       id: item.id, name: item.name, quantity: item.quantity,
       purpose: item.purpose ? item.purpose.trim().slice(0, 500) : "",
@@ -138,8 +170,29 @@ const BrowseEquipment = () => {
       fetchItems();
       return;
     }
+
+    // Update borrow records with photo URL (for records just created)
+    // Get the latest borrow records for this user matching cart items
+    const { data: latestRecords } = await supabase
+      .from("borrow_records")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "borrowed")
+      .is("borrow_photo_url", null)
+      .order("created_at", { ascending: false })
+      .limit(cart.length);
+
+    if (latestRecords && latestRecords.length > 0) {
+      const ids = latestRecords.map(r => r.id);
+      await supabase
+        .from("borrow_records")
+        .update({ borrow_photo_url: photoUrl })
+        .in("id", ids);
+    }
+
     toast.success(`Successfully borrowed ${cart.length} item(s)!`);
     setCart([]);
+    clearPhoto();
     setCartOpen(false);
     setBorrowing(false);
     fetchItems();
@@ -206,11 +259,9 @@ const BrowseEquipment = () => {
             const inCart = getCartQty(item.id);
             const outOfStock = item.available_quantity === 0;
             const config = getCategoryConfig(item.category);
-            const IconComponent = config.icon;
             return (
               <Card key={item.id} className={`border-0 shadow-md hover:shadow-lg transition-all group ${outOfStock ? "opacity-50" : ""}`}>
                 <CardContent className="p-5">
-                  {/* Icon + Category */}
                   <div className="flex items-start justify-between mb-3">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${config.color}`}>
                       {config.emoji}
@@ -219,12 +270,8 @@ const BrowseEquipment = () => {
                       <Badge className="bg-primary text-primary-foreground">In Cart: {inCart}</Badge>
                     )}
                   </div>
-
-                  {/* Name */}
                   <h3 className="text-base font-bold mb-1 leading-tight">{item.name}</h3>
                   <p className="text-xs text-muted-foreground mb-3">{item.category}</p>
-
-                  {/* Stock Info */}
                   <div className="flex items-center justify-between mb-4">
                     {outOfStock ? (
                       <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
@@ -244,8 +291,6 @@ const BrowseEquipment = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* Add Button */}
                   <Button
                     onClick={() => addToCart(item)}
                     disabled={outOfStock || inCart >= item.available_quantity}
@@ -311,10 +356,24 @@ const BrowseEquipment = () => {
                     </div>
                   );
                 })}
-                <Button onClick={handleBorrowAll} disabled={borrowing} className="w-full font-semibold gap-2 mt-4">
+
+                {/* Camera capture - mandatory */}
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <CameraCapture
+                    onCapture={handlePhotoCapture}
+                    capturedPreview={photoPreview}
+                    onClear={clearPhoto}
+                    label="📸 Take photo of items (required)"
+                  />
+                </div>
+
+                <Button onClick={handleBorrowAll} disabled={borrowing || !photoBlob} className="w-full font-semibold gap-2 mt-4">
                   <ShoppingCart className="h-4 w-4" />
                   {borrowing ? "Borrowing..." : `Borrow All (${cart.reduce((s, c) => s + c.quantity, 0)} items)`}
                 </Button>
+                {!photoBlob && (
+                  <p className="text-xs text-destructive text-center">⚠️ Photo is required before borrowing</p>
+                )}
               </div>
             )}
           </DialogContent>

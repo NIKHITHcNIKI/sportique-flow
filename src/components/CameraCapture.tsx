@@ -25,21 +25,38 @@ const CameraCapture = ({ onCapture, capturedPreview, onClear, label = "Take Phot
 
   const startCamera = useCallback(async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Camera is not available. If you're in a preview, please test on the published site.");
+        return;
+      }
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       streamRef.current = mediaStream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
-          setVideoReady(true);
-        };
-      }
       setStreaming(true);
-    } catch {
-      alert("Camera access denied. Please allow camera access to take photos.");
+      // Wait for next render so video element is mounted
+      setTimeout(() => {
+        if (videoRef.current && streamRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().then(() => {
+              setVideoReady(true);
+            }).catch(() => {
+              setVideoReady(true);
+            });
+          };
+        }
+      }, 100);
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      if (err?.name === "NotAllowedError") {
+        alert("Camera access denied. Please allow camera access in your browser settings.");
+      } else if (err?.name === "NotFoundError") {
+        alert("No camera found on this device.");
+      } else {
+        alert("Camera is not available. If you're in a preview iframe, please test on the published site.");
+      }
     }
   }, []);
 

@@ -107,7 +107,15 @@ const ManageItems = () => {
           </div>
           <div className="flex gap-2">
             <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
-              <Download className="h-4 w-4" /> Download CSV
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+            <Button onClick={() => {
+              const headers = ["Name", "Category", "Total Qty", "Available Qty", "Condition", "Description"];
+              const rows = items.map(i => [i.name, i.category, String(i.total_quantity), String(i.available_quantity), i.condition, i.description ?? ""]);
+              generatePDFReport({ title: "Equipment Inventory Report", headers, rows, filename: "equipment_report.pdf" });
+              toast.success("PDF report downloaded!");
+            }} variant="outline" className="gap-2 font-semibold">
+              <FileText className="h-4 w-4" /> PDF Report
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>

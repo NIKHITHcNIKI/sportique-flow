@@ -114,7 +114,15 @@ const ScrapItems = () => {
           </div>
           <div className="flex gap-2">
             <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
-              <Download className="h-4 w-4" /> Download CSV
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+            <Button onClick={() => {
+              const headers = ["Item", "Quantity", "Reason", "Date"];
+              const rows = scraps.map(s => [s.items?.name ?? "Unknown", String(s.quantity), s.reason ?? "—", format(new Date(s.scrapped_at), "MMM d, yyyy")]);
+              generatePDFReport({ title: "Scrap Items Report", headers, rows, filename: "scrap_report.pdf" });
+              toast.success("PDF report downloaded!");
+            }} variant="outline" className="gap-2 font-semibold">
+              <FileText className="h-4 w-4" /> PDF Report
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>

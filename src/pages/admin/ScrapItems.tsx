@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
 import { format } from "date-fns";
-import { Trash2, Plus, Download } from "lucide-react";
+import { Trash2, Plus, Download, Camera, Upload, Image, X } from "lucide-react";
 import { downloadCSV } from "@/lib/csv-export";
+import CameraCapture from "@/components/CameraCapture";
 
 const ScrapItems = () => {
   const { user } = useAuth();

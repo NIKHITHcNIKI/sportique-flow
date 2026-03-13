@@ -37,15 +37,46 @@ const ScrapItems = () => {
 
   useEffect(() => { fetchScraps(); fetchItems(); }, []);
 
+  const uploadPhoto = async (blob: Blob): Promise<string | null> => {
+    const fileName = `scrap_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+    const { error } = await supabase.storage.from("borrow-photos").upload(fileName, blob, { contentType: "image/jpeg" });
+    if (error) return null;
+    const { data: urlData } = supabase.storage.from("borrow-photos").getPublicUrl(fileName);
+    return urlData.publicUrl;
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    setPhotoBlob(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const clearPhoto = () => {
+    setPhotoBlob(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleScrap = async () => {
     if (!form.item_id) { toast.error("Select an item"); return; }
     if (form.quantity < 1 || form.quantity > 9999) { toast.error("Quantity must be between 1 and 9999"); return; }
     if (form.reason && form.reason.length > 500) { toast.error("Reason must be under 500 characters"); return; }
+
+    let photoUrl: string | null = null;
+    if (photoBlob) {
+      photoUrl = await uploadPhoto(photoBlob);
+      if (!photoUrl) { toast.error("Failed to upload photo"); return; }
+    }
+
     const { error } = await supabase.from("scrap_items").insert({
       item_id: form.item_id,
       quantity: form.quantity,
       reason: form.reason ? form.reason.trim().slice(0, 500) : null,
       scrapped_by: user?.id,
+      photo_url: photoUrl,
     });
     if (error) { toast.error(mapDbError(error)); return; }
 
@@ -56,6 +87,7 @@ const ScrapItems = () => {
     toast.success("Item scrapped!");
     setOpen(false);
     setForm({ item_id: "", quantity: 1, reason: "" });
+    clearPhoto();
     fetchScraps();
     fetchItems();
   };

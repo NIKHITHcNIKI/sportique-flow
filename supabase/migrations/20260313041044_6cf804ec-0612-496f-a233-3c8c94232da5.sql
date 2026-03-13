@@ -1,0 +1,1 @@
+ALTER TABLE public.scrap_items ADD COLUMN photo_url text;

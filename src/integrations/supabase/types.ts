@@ -143,6 +143,7 @@ export type Database = {
         Row: {
           id: string
           item_id: string
+          photo_url: string | null
           quantity: number
           reason: string | null
           scrapped_at: string
@@ -151,6 +152,7 @@ export type Database = {
         Insert: {
           id?: string
           item_id: string
+          photo_url?: string | null
           quantity?: number
           reason?: string | null
           scrapped_at?: string
@@ -159,6 +161,7 @@ export type Database = {
         Update: {
           id?: string
           item_id?: string
+          photo_url?: string | null
           quantity?: number
           reason?: string | null
           scrapped_at?: string

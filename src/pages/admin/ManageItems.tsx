@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
-import { Plus, Edit, Trash2, Package, Download } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Download, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { downloadCSV } from "@/lib/csv-export";
+import { generatePDFReport } from "@/lib/pdf-report";
 
 type Item = {
   id: string;
@@ -106,7 +107,15 @@ const ManageItems = () => {
           </div>
           <div className="flex gap-2">
             <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
-              <Download className="h-4 w-4" /> Download CSV
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+            <Button onClick={() => {
+              const headers = ["Name", "Category", "Total Qty", "Available Qty", "Condition", "Description"];
+              const rows = items.map(i => [i.name, i.category, String(i.total_quantity), String(i.available_quantity), i.condition, i.description ?? ""]);
+              generatePDFReport({ title: "Equipment Inventory Report", headers, rows, filename: "equipment_report.pdf" });
+              toast.success("PDF report downloaded!");
+            }} variant="outline" className="gap-2 font-semibold">
+              <FileText className="h-4 w-4" /> PDF Report
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>

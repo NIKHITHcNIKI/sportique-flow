@@ -6,15 +6,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
-import { format } from "date-fns";
-import { CheckCircle, Download, Image } from "lucide-react";
+import { format, startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear } from "date-fns";
+import { CheckCircle, Download, Image, FileText } from "lucide-react";
 import { downloadCSV } from "@/lib/csv-export";
+import { generatePDFReport } from "@/lib/pdf-report";
+import { Calendar } from "@/components/ui/calendar";
 
 const BorrowHistory = () => {
   const [records, setRecords] = useState<any[]>([]);
   const [photoDialog, setPhotoDialog] = useState<{ open: boolean; url: string; title: string }>({ open: false, url: "", title: "" });
+  const [reportType, setReportType] = useState<string>("all");
+  const [reportDate, setReportDate] = useState<Date>(new Date());
+  const [reportOpen, setReportOpen] = useState(false);
 
   const fetchRecords = async () => {
     const { data } = await supabase
@@ -72,6 +79,64 @@ const BorrowHistory = () => {
     toast.success("Downloaded borrow history!");
   };
 
+  const generateReport = () => {
+    let filtered = records;
+    let titleSuffix = "";
+
+    if (reportType === "daily") {
+      const dayStart = startOfDay(reportDate);
+      const dayEnd = endOfDay(reportDate);
+      filtered = records.filter(r => {
+        const d = new Date(r.borrow_date);
+        return d >= dayStart && d <= dayEnd;
+      });
+      titleSuffix = ` — ${format(reportDate, "dd MMM yyyy")}`;
+    } else if (reportType === "monthly") {
+      const mStart = startOfMonth(reportDate);
+      const mEnd = endOfMonth(reportDate);
+      filtered = records.filter(r => {
+        const d = new Date(r.borrow_date);
+        return d >= mStart && d <= mEnd;
+      });
+      titleSuffix = ` — ${format(reportDate, "MMMM yyyy")}`;
+    } else if (reportType === "yearly") {
+      const yStart = startOfYear(reportDate);
+      const yEnd = endOfYear(reportDate);
+      filtered = records.filter(r => {
+        const d = new Date(r.borrow_date);
+        return d >= yStart && d <= yEnd;
+      });
+      titleSuffix = ` — ${format(reportDate, "yyyy")}`;
+    }
+
+    if (filtered.length === 0) {
+      toast.error("No records found for the selected period");
+      return;
+    }
+
+    const headers = ["Student Name", "Student ID", "Department", "Item", "Qty", "Borrow Date", "Return Date", "Status", "Purpose"];
+    const rows = filtered.map(r => [
+      r.profile?.full_name ?? "Unknown",
+      r.profile?.student_id ?? "—",
+      r.profile?.department ?? "—",
+      r.items?.name ?? "Unknown",
+      String(r.quantity),
+      format(new Date(r.borrow_date), "MMM d, yyyy"),
+      r.actual_return_date ? format(new Date(r.actual_return_date), "MMM d, yyyy") : "—",
+      r.status.replace("_", " "),
+      r.purpose ?? "",
+    ]);
+
+    generatePDFReport({
+      title: `Borrow History Report${titleSuffix}`,
+      headers,
+      rows,
+      filename: `borrow_report_${reportType}.pdf`,
+    });
+    toast.success("PDF report downloaded!");
+    setReportOpen(false);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -80,9 +145,64 @@ const BorrowHistory = () => {
             <h1 className="text-5xl text-secondary">BORROW HISTORY</h1>
             <p className="text-muted-foreground mt-1">All borrowing records and return approvals</p>
           </div>
-          <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
-            <Download className="h-4 w-4" /> Download CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+            <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+              <Button onClick={() => setReportOpen(true)} variant="outline" className="gap-2 font-semibold">
+                <FileText className="h-4 w-4" /> PDF Report
+              </Button>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>GENERATE REPORT</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-2">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Report Period</label>
+                    <Select value={reportType} onValueChange={setReportType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Records</SelectItem>
+                        <SelectItem value="daily">Daily Report</SelectItem>
+                        <SelectItem value="monthly">Monthly Report</SelectItem>
+                        <SelectItem value="yearly">Yearly Report</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {reportType !== "all" && (
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">
+                        {reportType === "daily" ? "Select Date" : reportType === "monthly" ? "Select Month" : "Select Year"}
+                      </label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            {reportType === "daily" && format(reportDate, "dd MMM yyyy")}
+                            {reportType === "monthly" && format(reportDate, "MMMM yyyy")}
+                            {reportType === "yearly" && format(reportDate, "yyyy")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={reportDate}
+                            onSelect={(d) => d && setReportDate(d)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
+
+                  <Button onClick={generateReport} className="w-full font-semibold gap-2">
+                    <FileText className="h-4 w-4" /> Generate PDF
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card className="border-0 shadow-md">

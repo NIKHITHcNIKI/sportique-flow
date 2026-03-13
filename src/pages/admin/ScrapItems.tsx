@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
 import { format } from "date-fns";
-import { Trash2, Plus, Download, Camera, Upload, Image, X } from "lucide-react";
+import { Trash2, Plus, Download, Camera, Upload, Image, X, FileText } from "lucide-react";
 import { downloadCSV } from "@/lib/csv-export";
+import { generatePDFReport } from "@/lib/pdf-report";
 import CameraCapture from "@/components/CameraCapture";
 
 const ScrapItems = () => {
@@ -113,7 +114,15 @@ const ScrapItems = () => {
           </div>
           <div className="flex gap-2">
             <Button onClick={downloadFile} variant="outline" className="gap-2 font-semibold">
-              <Download className="h-4 w-4" /> Download CSV
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+            <Button onClick={() => {
+              const headers = ["Item", "Quantity", "Reason", "Date"];
+              const rows = scraps.map(s => [s.items?.name ?? "Unknown", String(s.quantity), s.reason ?? "—", format(new Date(s.scrapped_at), "MMM d, yyyy")]);
+              generatePDFReport({ title: "Scrap Items Report", headers, rows, filename: "scrap_report.pdf" });
+              toast.success("PDF report downloaded!");
+            }} variant="outline" className="gap-2 font-semibold">
+              <FileText className="h-4 w-4" /> PDF Report
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>

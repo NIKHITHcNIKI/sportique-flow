@@ -21,6 +21,9 @@ const ScrapItems = () => {
   const [items, setItems] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ item_id: "", quantity: 1, reason: "" });
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchScraps = async () => {
     const { data } = await supabase.from("scrap_items").select("*, items(name)").order("scrapped_at", { ascending: false });

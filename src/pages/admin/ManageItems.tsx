@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
-import { Plus, Edit, Trash2, Package, Download } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Download, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { downloadCSV } from "@/lib/csv-export";
+import { generatePDFReport } from "@/lib/pdf-report";
 
 type Item = {
   id: string;

@@ -177,6 +177,7 @@ const ScrapItems = () => {
                   <TableHead>Item</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead>Reason</TableHead>
+                  <TableHead>Photo</TableHead>
                   <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>

@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
 import { format } from "date-fns";
-import { Trash2, Plus, Download, Camera, Upload, Image, X } from "lucide-react";
+import { Trash2, Plus, Download, Camera, Upload, Image, X, FileText } from "lucide-react";
 import { downloadCSV } from "@/lib/csv-export";
+import { generatePDFReport } from "@/lib/pdf-report";
 import CameraCapture from "@/components/CameraCapture";
 
 const ScrapItems = () => {

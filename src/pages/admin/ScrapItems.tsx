@@ -134,6 +134,34 @@ const ScrapItems = () => {
                   </Select>
                   <Input type="number" min={1} max={9999} placeholder="Quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Math.max(1, Math.min(9999, +e.target.value)) })} />
                   <Input placeholder="Reason (optional)" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} maxLength={500} />
+                  
+                  {/* Photo section */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Photo (optional)</p>
+                    {photoPreview ? (
+                      <div className="relative rounded-lg overflow-hidden border">
+                        <img src={photoPreview} alt="Scrap photo" className="w-full h-40 object-cover" />
+                        <Button type="button" size="sm" variant="destructive" className="absolute top-2 right-2 gap-1" onClick={clearPhoto}>
+                          <X className="h-3 w-3" /> Remove
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <CameraCapture
+                          onCapture={(blob) => { setPhotoBlob(blob); setPhotoPreview(URL.createObjectURL(blob)); }}
+                          capturedPreview={null}
+                          label="Take Photo"
+                        />
+                        <div className="flex-1">
+                          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                          <Button type="button" variant="outline" size="sm" className="w-full gap-1.5" onClick={() => fileInputRef.current?.click()}>
+                            <Upload className="h-4 w-4" /> Upload Photo
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <Button onClick={handleScrap} className="w-full bg-destructive hover:bg-destructive/90 font-semibold">Confirm Scrap</Button>
                 </div>
               </DialogContent>

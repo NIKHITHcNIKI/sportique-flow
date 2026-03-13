@@ -190,11 +190,18 @@ const ScrapItems = () => {
                     </TableCell>
                     <TableCell>{s.quantity}</TableCell>
                     <TableCell>{s.reason ?? "—"}</TableCell>
+                    <TableCell>
+                      {s.photo_url ? (
+                        <a href={s.photo_url} target="_blank" rel="noopener noreferrer">
+                          <img src={s.photo_url} alt="Scrap" className="h-10 w-10 rounded object-cover border" />
+                        </a>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
                     <TableCell>{format(new Date(s.scrapped_at), "MMM d, yyyy")}</TableCell>
                   </TableRow>
                 ))}
                 {scraps.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No scrapped items</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No scrapped items</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

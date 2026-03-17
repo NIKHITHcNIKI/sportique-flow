@@ -2,15 +2,19 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { Package, Users, ArrowDownUp, Trash2 } from "lucide-react";
+import { Package, Users, ArrowDownUp, Trash2, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
+import { generateCombinedPDFReport } from "@/lib/pdf-report";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ items: 0, students: 0, borrows: 0, scrapped: 0 });
   const [recentBorrows, setRecentBorrows] = useState<any[]>([]);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -50,12 +54,73 @@ const AdminDashboard = () => {
     }
   };
 
+  const generateFullReport = async () => {
+    setGenerating(true);
+    try {
+      const [itemsRes, borrowsRes, scrapsRes] = await Promise.all([
+        supabase.from("items").select("*").order("name"),
+        supabase.from("borrow_records").select("*, items(name)").order("created_at", { ascending: false }),
+        supabase.from("scrap_items").select("*, items(name)").order("scrapped_at", { ascending: false }),
+      ]);
+
+      const userIds = [...new Set((borrowsRes.data ?? []).map((r: any) => r.user_id))];
+      const { data: profiles } = userIds.length
+        ? await supabase.from("profiles").select("user_id, full_name, student_id, department").in("user_id", userIds)
+        : { data: [] };
+      const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.user_id, p]));
+
+      const sections = [
+        {
+          title: "Equipment Inventory Report",
+          headers: ["Name", "Category", "Total Qty", "Available Qty", "Condition"],
+          rows: (itemsRes.data ?? []).map((i: any) => [
+            i.name, i.category, String(i.total_quantity), String(i.available_quantity), i.condition,
+          ]),
+        },
+        {
+          title: "Borrow History Report",
+          headers: ["Student Name", "Student ID", "Department", "Item", "Qty", "Borrow Date", "Return Date", "Status", "Purpose"],
+          rows: (borrowsRes.data ?? []).map((r: any) => {
+            const p = profileMap[r.user_id];
+            return [
+              p?.full_name ?? "Unknown", p?.student_id ?? "—", p?.department ?? "—",
+              r.items?.name ?? "Unknown", String(r.quantity),
+              format(new Date(r.borrow_date), "MMM d, yyyy"),
+              r.actual_return_date ? format(new Date(r.actual_return_date), "MMM d, yyyy") : "—",
+              r.status.replace("_", " "), r.purpose ?? "",
+            ];
+          }),
+        },
+        {
+          title: "Scrapped Items Report",
+          headers: ["Item Name", "Quantity", "Reason", "Scrapped Date"],
+          rows: (scrapsRes.data ?? []).map((s: any) => [
+            s.items?.name ?? "Unknown", String(s.quantity), s.reason ?? "—",
+            format(new Date(s.scrapped_at), "MMM d, yyyy"),
+          ]),
+        },
+      ];
+
+      await generateCombinedPDFReport(sections, "full_admin_report.pdf");
+      toast.success("Full report downloaded!");
+    } catch (err) {
+      toast.error("Failed to generate report");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-5xl text-secondary">ADMIN DASHBOARD</h1>
-          <p className="text-muted-foreground mt-1">Overview of sports equipment management</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-5xl text-secondary">ADMIN DASHBOARD</h1>
+            <p className="text-muted-foreground mt-1">Overview of sports equipment management</p>
+          </div>
+          <Button onClick={generateFullReport} disabled={generating} variant="outline" className="gap-2 font-semibold">
+            <FileText className="h-4 w-4" /> {generating ? "Generating..." : "Full PDF Report"}
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

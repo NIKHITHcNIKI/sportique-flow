@@ -13,6 +13,10 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  base: mode === "development" ? '/' : '/',
+  build:{
+    chunkSizeWarningLimit: 2000,
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),

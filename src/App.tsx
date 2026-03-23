@@ -17,6 +17,7 @@ import RegisteredStudents from "./pages/admin/RegisteredStudents";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import BrowseEquipment from "./pages/student/BrowseEquipment";
 import MyBorrows from "./pages/student/MyBorrows";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/install" element={<Install />} />
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/items" element={<ProtectedRoute requiredRole="admin"><ManageItems /></ProtectedRoute>} />
             <Route path="/admin/borrows" element={<ProtectedRoute requiredRole="admin"><BorrowHistory /></ProtectedRoute>} />

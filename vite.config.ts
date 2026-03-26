@@ -6,7 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/sportique-flow/",
+  base: process.env.GITHUB_PAGES === "true" ? "/sportique-flow/" : "/",
   server: {
     host: "::",
     port: 8080,

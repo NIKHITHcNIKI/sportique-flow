@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "@/components/ui/sonner";
 import { mapDbError } from "@/lib/error-mapper";
 import { format, startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear } from "date-fns";
-import { CheckCircle, Download, Image, FileText } from "lucide-react";
+import { CheckCircle, Download, Image, FileText, Trash2 } from "lucide-react";
 import { downloadCSV } from "@/lib/csv-export";
 import { generatePDFReport } from "@/lib/pdf-report";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,6 +38,14 @@ const BorrowHistory = () => {
   };
 
   useEffect(() => { fetchRecords(); }, []);
+
+  const deleteRecord = async (record: any) => {
+    if (!confirm("Are you sure you want to delete this borrow record?")) return;
+    const { error } = await supabase.from("borrow_records").delete().eq("id", record.id);
+    if (error) { toast.error(mapDbError(error)); return; }
+    toast.success("Record deleted!");
+    fetchRecords();
+  };
 
   const approveReturn = async (record: any) => {
     const { error } = await supabase
@@ -251,11 +259,16 @@ const BorrowHistory = () => {
                     </TableCell>
                     <TableCell><Badge className={statusColor(r.status)}>{r.status.replace("_", " ")}</Badge></TableCell>
                     <TableCell>
-                      {r.status === "return_requested" && (
-                        <Button size="sm" onClick={() => approveReturn(r)} className="gap-1">
-                          <CheckCircle className="h-4 w-4" /> Approve
+                      <div className="flex gap-1">
+                        {r.status === "return_requested" && (
+                          <Button size="sm" onClick={() => approveReturn(r)} className="gap-1">
+                            <CheckCircle className="h-4 w-4" /> Approve
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => deleteRecord(r)} className="gap-1 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

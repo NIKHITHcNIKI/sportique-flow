@@ -1,0 +1,1 @@
+CREATE POLICY "Admins can delete borrows" ON public.borrow_records FOR DELETE TO authenticated USING (has_role(auth.uid(), 'admin'::app_role));

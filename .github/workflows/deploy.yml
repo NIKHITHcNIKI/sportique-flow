@@ -17,6 +17,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      GITHUB_PAGES: "true"
+      VITE_BASE_PATH: "/sportique-flow/"
       VITE_SUPABASE_URL: https://sfmahsqrfncbeuccswjg.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmbWFoc3FyZm5jYmV1Y2Nzd2pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MTMyNTUsImV4cCI6MjA4NzA4OTI1NX0.UVkEkBvv7T4RRldAHORF2VG8bNPRdh1IAr1In0tPh6U
     steps:

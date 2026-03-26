@@ -27,7 +27,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename="/sportique-flow">
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
